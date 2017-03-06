@@ -11,16 +11,18 @@ namespace NEAT.Neural
     {
         private static int GlobalInnovation = 0;
 
-        public int Innovation { get; private set; }
+        public int Innovation { get; set; }
         public int Source { get; set; }
         public int Destination { get; set; }
         public double Weight { get; set; }
+        public bool Disabled { get; set; }
 
         public Gene(int s, int d, double w)
         {
             Source = s;
             Destination = d;
             Weight = d;
+            Disabled = false;
             Innovation = GlobalInnovation++;
         }
 
