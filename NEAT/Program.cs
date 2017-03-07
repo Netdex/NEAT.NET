@@ -34,7 +34,7 @@ namespace NEAT
 
         public static void AddDummyWithInnovation(Genome g, int innovation)
         {
-            g.Genetic.Add(new Gene(0, 0, 0) {Innovation = innovation});
+            g.LinkGenotype.Add(new LinkGene(0, 0, 0) {Innovation = innovation});
         }
     }
 }

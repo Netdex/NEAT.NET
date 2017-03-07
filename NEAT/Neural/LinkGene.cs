@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace NEAT.Neural
 {
-    struct Gene : IComparable<Gene>, IEquatable<Gene>
+    struct LinkGene : IComparable<LinkGene>, IEquatable<LinkGene>
     {
         private static int GlobalInnovation = 0;
 
@@ -17,7 +17,7 @@ namespace NEAT.Neural
         public double Weight { get; set; }
         public bool Disabled { get; set; }
 
-        public Gene(int s, int d, double w)
+        public LinkGene(int s, int d, double w)
         {
             Source = s;
             Destination = d;
@@ -26,22 +26,22 @@ namespace NEAT.Neural
             Innovation = GlobalInnovation++;
         }
 
-        public int CompareTo(Gene other)
+        public int CompareTo(LinkGene other)
         {
             return Innovation - other.Innovation;
         }
 
-        public bool Equals(Gene other)
+        public bool Equals(LinkGene other)
         {
             return Innovation == other.Innovation;
         }
 
-        public static bool operator ==(Gene a, Gene b)
+        public static bool operator ==(LinkGene a, LinkGene b)
         {
             return a.Equals(b);
         }
 
-        public static bool operator !=(Gene a, Gene b)
+        public static bool operator !=(LinkGene a, LinkGene b)
         {
             return !a.Equals(b);
         }

@@ -43,8 +43,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Neural\Gene.cs" />
+    <Compile Include="Neural\LinkGene.cs" />
     <Compile Include="Neural\Genome.cs" />
+    <Compile Include="Neural\NEATNET.cs" />
+    <Compile Include="Neural\NodeGene.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
