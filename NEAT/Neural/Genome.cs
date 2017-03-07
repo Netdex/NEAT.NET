@@ -9,6 +9,8 @@ namespace NEAT.Neural
 {
     class Genome
     {
+        // Fitness metric only for use by species
+        public double Fitness { get; set; }
 
         public List<LinkGene> LinkGenotype { get; set; } = new List<LinkGene>();
         public List<NodeGene> NodeGenotype { get; set; } = new List<NodeGene>();
@@ -104,13 +106,9 @@ namespace NEAT.Neural
         public void InitializeUtilityNodes()
         {
             for (int i = 0; i < InputNodeCount; i++)
-            {
                 AddNode(NodeType.Input);
-            }
             for (int i = 0; i < OutputNodeCount; i++)
-            {
                 AddNode(NodeType.Output);
-            }
         }
 
         public void Mutate()

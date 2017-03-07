@@ -8,7 +8,6 @@ namespace NEAT.Neural
 {
     class Population
     {
-        // Chance for crossover to occur between two genomes during mating
-        private const double CrossoverChance = 0.75;
+        // TODO Population management, which species does this go into, generation progression
     }
 }
