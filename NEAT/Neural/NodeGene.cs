@@ -17,11 +17,15 @@ namespace NEAT.Neural
     {
         public int ID { get; set; }
         public NodeType Type { get; set; }
+        public List<LinkGene> Inputs { get; set; }
+        public List<LinkGene> Outputs { get;set; }
 
         public NodeGene(int id, NodeType type)
         {
             ID = id;
             Type = type;
+            Inputs = new List<LinkGene>();
+            Outputs = new List<LinkGene>();
         }
     }
 }

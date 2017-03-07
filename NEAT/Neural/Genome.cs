@@ -17,18 +17,26 @@ namespace NEAT.Neural
         public readonly int OutputNodeCount;
         private int NextNeuronID = 0;
 
+        /* CONSTANTS */
+        // Weighting in compatibility metric for excess genes
         private const double ExcessWeight = 1.0;
+        // Weighting in compatibility metric for disjoint genes
         private const double DisjointWeight = 1.0;
+        // Weighting in compatibility metric for weighting differences between matching genes
         private const double WeightDiffWeight = 0.4;
 
-        // Chance for crossover to occur between two genomes during mating
-        private const double CrossoverChance = 0.75;
         // Chance for a disabled gene to re-enable
         private const double GeneEnableChance = 0.2;
         // Chance for an enabled gene to disable
         private const double GeneDisableChance = 0.4;
-        // Chance for a link's weight to mutate to a random value
-        private const double WeightMutationChance = 0.9;
+
+        // Chance for a link's weight to mutate
+        private const double WeightMutationChance = 0.8;
+        // Chance for the weight to mutate by a uniform value if the mutation is already decided
+        private const double WeightPerturbChance = 0.9;
+        // Range of weight perturbance
+        private const double WeightPerturbEpsilon = 0.1;
+
         // Chance for a node to be added along a random link
         private const double AddNodeMutationChance = 0.5;
         // Chance for two nodes to be linked randomly
@@ -44,6 +52,52 @@ namespace NEAT.Neural
                 throw new ArgumentException("Invalid input/output count of NN");
         }
 
+        public double[] EvaluateNeuralNetwork(double[] input)
+        {
+            if (input.Length != InputNodeCount)
+                throw new ArgumentException("Input length does not match neural network inputs");
+
+            memoizedOutput = new double[NextNeuronID];
+            for (int i = 0; i < NextNeuronID; i++)
+                memoizedOutput[i] = -1;
+            double[] outputs = new double[OutputNodeCount];
+            for (int i = 0; i < OutputNodeCount; i++)
+            {
+                int onid = InputNodeCount + i;
+                outputs[i] = GetNeuronOutput(input, onid);
+            }
+            return outputs;
+        }
+
+        private double[] memoizedOutput;
+
+        /*
+         * Evaluate the outputs of the neural network, while memoizing existing values to avoid repeating calculations
+         */
+        public double GetNeuronOutput(double[] inputs, int id)
+        {
+            // This is only allowed because the inputs are guaranteed to come first
+            if (id < InputNodeCount)
+                return inputs[id];
+            
+            if (memoizedOutput[id] > 0)
+                return memoizedOutput[id];
+
+            if(NodeGenotype[id].Inputs.Count == 0)
+                throw new ArgumentException("Encountered intermediate/output neuron with no inputs!");
+
+            double csum = 0;
+            foreach (LinkGene lg in NodeGenotype[id].Inputs)
+            {
+                double op = GetNeuronOutput(inputs, lg.Source);
+                memoizedOutput[lg.Source] = op;
+                csum += op * lg.Weight;
+            }
+
+            return Sigmoid(csum);
+        }
+
+        
         /*
          * Initiate structures for input and output nodes
          */
@@ -58,10 +112,13 @@ namespace NEAT.Neural
                 AddNode(NodeType.Output);
             }
         }
+
         public void Mutate()
         {
+            // Add Node Mutation
             if (NEATNET.Random.NextDouble() < AddNodeMutationChance)
             {
+                // There's a possibility that there aren't any links at all
                 if (LinkGenotype.Count > 0)
                 {
                     // Pick random link
@@ -71,16 +128,41 @@ namespace NEAT.Neural
                     AddIntermediateNode(a);
                 }
             }
+
+            // Add Link Mutation
             if (NEATNET.Random.NextDouble() < AddLinkMutationChance)
             {
                 // Pick two unique neurons, there are guaranteed to be at least two
-                // TODO THIS IS NOT CORRECT
-                int ridxa = NEATNET.Random.Next(NextNeuronID);
+                // Starting neuron cannot be an output neuron, ending neuron cannot be an input neuron
+                int ridxa;
+                do
+                {
+                    ridxa = NEATNET.Random.Next(NextNeuronID);
+                } while (NodeGenotype[ridxa].Type != NodeType.Output);
                 int ridxb = ridxa;
-                while (ridxb == ridxa)
+                while (ridxb == ridxa || NodeGenotype[ridxb].Type == NodeType.Input)
                     ridxb = NEATNET.Random.Next(NextNeuronID);
-
+                AddConnection(ridxa, ridxb, RandomWeight());
             }
+
+            for (int i = 0; i < LinkGenotype.Count; i++)
+            {
+                var lg = LinkGenotype[i];
+                if (NEATNET.Random.NextDouble() < WeightMutationChance)
+                {
+                    if (NEATNET.Random.NextDouble() < WeightPerturbChance)
+                    {
+                        // Perturb weighting by a uniform amount
+                        lg.Weight += WeightPerturbEpsilon * RandomWeight();
+                    }
+                    else
+                    {
+                        // Randomize weighting
+                        lg.Weight = RandomWeight();
+                    }
+                }
+            }
+            // TODO Implement other mutation types
         }
 
         public void AddIntermediateNode(LinkGene a)
@@ -100,12 +182,18 @@ namespace NEAT.Neural
 
         public void AddConnection(int source, int destination, double weight)
         {
-            LinkGenotype.Add(new LinkGene(source, destination, weight));
+            var lg = new LinkGene(source, destination, weight);
+            LinkGenotype.Add(lg);
+            NodeGenotype[source].Outputs.Add(lg);
+            NodeGenotype[destination].Inputs.Add(lg);
         }
 
+        /*
+         * Gets a random double between 1 and -1
+         */
         public double RandomWeight()
         {
-            return NEATNET.Random.NextDouble() - 0.5;
+            return NEATNET.Random.NextDouble() * 2 - 1;
         }
 
         /*
@@ -147,6 +235,11 @@ namespace NEAT.Neural
             int N = Math.Max(a.LinkGenotype.Count, b.LinkGenotype.Count);
             // Console.WriteLine($"D:{D} E:{E} W/:{WS/WC} N:{N}");
             return ExcessWeight * E / N + DisjointWeight * D / N + WeightDiffWeight * (WS / WC);
+        }
+
+        public double Sigmoid(double d)
+        {
+            return 1.0 / (1 + Math.Exp(-4.9 * d));
         }
     }
 }

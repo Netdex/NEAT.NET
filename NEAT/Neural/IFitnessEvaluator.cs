@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace NEAT.Neural
 {
-    class NEATNET
+    interface IFitnessEvaluator
     {
-        // Random source for all random operations
-        public static Random Random = new Random();
+        double EvaluateFitness(Genome g);
     }
 }
