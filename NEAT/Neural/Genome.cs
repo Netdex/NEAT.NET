@@ -186,6 +186,17 @@ namespace NEAT.Neural
             NodeGenotype[destination].Inputs.Add(lg);
         }
 
+        private void AddConnection(int source, int destination, double weight, int innovation)
+        {
+            var lg = new LinkGene(source, destination, weight)
+            {
+                Innovation = innovation
+            };
+            LinkGenotype.Add(lg);
+            NodeGenotype[source].Outputs.Add(lg);
+            NodeGenotype[destination].Inputs.Add(lg);
+        }
+
         /*
          * Gets a random double between 1 and -1
          */
@@ -233,6 +244,80 @@ namespace NEAT.Neural
             int N = Math.Max(a.LinkGenotype.Count, b.LinkGenotype.Count);
             // Console.WriteLine($"D:{D} E:{E} W/:{WS/WC} N:{N}");
             return ExcessWeight * E / N + DisjointWeight * D / N + WeightDiffWeight * (WS / WC);
+        }
+
+        /*
+         * Crosses two genomes of the same species together.
+         * Fitness MUST be evaluated first.
+         */
+        public static Genome Crossover(Genome a, Genome b)
+        {
+            if (a.InputNodeCount != b.InputNodeCount || a.OutputNodeCount != b.OutputNodeCount)
+                throw new ArgumentException("Genomes are fundamentally incompatible");
+
+            var newGenome = new Genome(a.InputNodeCount, a.OutputNodeCount);
+            int newNodeCount = Math.Max(a.NextNeuronID, b.NextNeuronID) - a.InputNodeCount - a.OutputNodeCount;
+            for (int i = 0; i < newNodeCount; i++)
+                newGenome.AddNode(NodeType.Intermediate);
+
+            int ac = 0, bc = 0;
+            while (ac < a.LinkGenotype.Count && bc < b.LinkGenotype.Count)
+            {
+                if (a.LinkGenotype[ac].Innovation > b.LinkGenotype[bc].Innovation)
+                {
+                    var ca = a.LinkGenotype[ac];
+                    newGenome.AddConnection(ca.Source, ca.Destination, ca.Weight, ca.Innovation);;
+                    bc++;
+                }
+                else if (a.LinkGenotype[ac].Innovation < b.LinkGenotype[bc].Innovation)
+                {
+                    var ca = b.LinkGenotype[bc];
+                    newGenome.AddConnection(ca.Source, ca.Destination, ca.Weight, ca.Innovation); ;
+                    ac++;
+                }
+                else
+                {
+                    // Add to mean weight differences between matching genes
+                    if (a.Fitness > b.Fitness)
+                    {
+                        var ca = a.LinkGenotype[ac];
+                        newGenome.AddConnection(ca.Source, ca.Destination, ca.Weight, ca.Innovation); ;
+                    }
+                    else if (b.Fitness > a.Fitness)
+                    {
+                        var ca = b.LinkGenotype[bc];
+                        newGenome.AddConnection(ca.Source, ca.Destination, ca.Weight, ca.Innovation); ;
+                    }
+                    else
+                    {
+                        if (NEATNET.Random.NextDouble() < 0.5)
+                        {
+                            var ca = a.LinkGenotype[ac];
+                            newGenome.AddConnection(ca.Source, ca.Destination, ca.Weight, ca.Innovation); ;
+                        }
+                        else
+                        {
+                            var ca = b.LinkGenotype[bc];
+                            newGenome.AddConnection(ca.Source, ca.Destination, ca.Weight, ca.Innovation); ;
+                        }
+                    }
+                    ac++;
+                    bc++;
+                }
+            }
+            while (ac < a.LinkGenotype.Count)
+            {
+                var ca = a.LinkGenotype[ac];
+                newGenome.AddConnection(ca.Source, ca.Destination, ca.Weight, ca.Innovation); ;
+                ac++;
+            }
+            while (bc < b.LinkGenotype.Count)
+            {
+                var ca = b.LinkGenotype[bc];
+                newGenome.AddConnection(ca.Source, ca.Destination, ca.Weight, ca.Innovation); ;
+                bc++;
+            }
+            return newGenome;
         }
 
         public double Sigmoid(double d)

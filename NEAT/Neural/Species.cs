@@ -35,7 +35,6 @@ namespace NEAT.Neural
 
         public double AverageFitness()
         {
-            // Local fitness is already over denominator, so no total division required
             double s = 0;
             for (int i = 0; i < Genomes.Count; i++)
                 s += Genomes[i].Fitness;
@@ -63,9 +62,17 @@ namespace NEAT.Neural
         /*
          * Generates offspring between two random members
          */
-        public void GetNextOffspring()
+        public Genome GetNextOffspring()
         {
+            if (Genomes.Count == 1)
+                return Genomes[0];
+
             // TODO
+            int ridxa = NEATNET.Random.Next(Genomes.Count);
+            int ridxb = ridxa;
+            while (ridxa == ridxb)
+                ridxb = NEATNET.Random.Next(Genomes.Count);
+            return Genome.Crossover(Genomes[ridxa], Genomes[ridxb]);
         }
 
         public double GetLocalFitnessMetric(double fitness)

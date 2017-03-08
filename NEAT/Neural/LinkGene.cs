@@ -21,7 +21,7 @@ namespace NEAT.Neural
         {
             Source = s;
             Destination = d;
-            Weight = d;
+            Weight = w;
             Disabled = false;
             Innovation = GlobalInnovation++;
         }
