@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace NEAT.Neural
 {
-    class Genome
+    public class Genome
     {
         // Fitness metric only for use by species
         public double Fitness { get; set; }
@@ -52,6 +52,7 @@ namespace NEAT.Neural
             OutputNodeCount = outputNodeCount;
             if (InputNodeCount == 0 || OutputNodeCount == 0)
                 throw new ArgumentException("Invalid input/output count of NN");
+            InitializeUtilityNodes();
         }
 
         public double[] EvaluateNeuralNetwork(double[] input)
@@ -61,12 +62,12 @@ namespace NEAT.Neural
 
             memoizedOutput = new double[NextNeuronID];
             for (int i = 0; i < NextNeuronID; i++)
-                memoizedOutput[i] = -1;
+                memoizedOutput[i] = double.NaN;
             double[] outputs = new double[OutputNodeCount];
             for (int i = 0; i < OutputNodeCount; i++)
             {
                 int onid = InputNodeCount + i;
-                outputs[i] = GetNeuronOutput(input, onid);
+                outputs[i] = GetNeuronOutput(input, onid, 0);
             }
             return outputs;
         }
@@ -76,22 +77,24 @@ namespace NEAT.Neural
         /*
          * Evaluate the outputs of the neural network, while memoizing existing values to avoid repeating calculations
          */
-        public double GetNeuronOutput(double[] inputs, int id)
+        public double GetNeuronOutput(double[] inputs, int id, int depth)
         {
             // This is only allowed because the inputs are guaranteed to come first
             if (id < InputNodeCount)
                 return inputs[id];
-            
-            if (memoizedOutput[id] > 0)
+
+            if (!double.IsNaN(memoizedOutput[id]))
                 return memoizedOutput[id];
 
-            if(NodeGenotype[id].Inputs.Count == 0)
+            if (NodeGenotype[id].Inputs.Count == 0)
                 throw new ArgumentException("Encountered intermediate/output neuron with no inputs!");
 
             double csum = 0;
             foreach (LinkGene lg in NodeGenotype[id].Inputs)
             {
-                double op = GetNeuronOutput(inputs, lg.Source);
+                Console.WriteLine(depth + " " + lg.Source);
+                double op = GetNeuronOutput(inputs, lg.Source, depth + 1);
+
                 memoizedOutput[lg.Source] = op;
                 csum += op * lg.Weight;
             }
@@ -99,7 +102,7 @@ namespace NEAT.Neural
             return Sigmoid(csum);
         }
 
-        
+
         /*
          * Initiate structures for input and output nodes
          */
@@ -132,17 +135,20 @@ namespace NEAT.Neural
             {
                 // Pick two unique neurons, there are guaranteed to be at least two
                 // Starting neuron cannot be an output neuron, ending neuron cannot be an input neuron
-                int ridxa;
-                do
-                {
-                    ridxa = NEATNET.Random.Next(NextNeuronID);
-                } while (NodeGenotype[ridxa].Type != NodeType.Output);
-                int ridxb = ridxa;
-                while (ridxb == ridxa || NodeGenotype[ridxb].Type == NodeType.Input)
-                    ridxb = NEATNET.Random.Next(NextNeuronID);
-                AddConnection(ridxa, ridxb, RandomWeight());
+                // Only connect lower nodes to higher nodes (assuming input nodes are lowest, intermediate are sorted by ID, and output are highest)
+                // TODO Implementation is flawed, must select two nodes that are UNCONNECTED
+                int ridxa = NEATNET.Random.Next(NextNeuronID - OutputNodeCount);
+                if (ridxa >= InputNodeCount) ridxa += OutputNodeCount; // skip the output nodes
+                int ridxb = NEATNET.Random.Next(OutputNodeCount + NextNeuronID - ridxa - 1);
+                if (ridxb >= OutputNodeCount)
+                    ridxb += ridxa - OutputNodeCount + 1;
+                else
+                    ridxb += InputNodeCount;
+                if(!LinkGeneExists(ridxa, ridxb))
+                    AddConnection(ridxa, ridxb, RandomWeight());
             }
 
+            // Link Weight Mutation
             for (int i = 0; i < LinkGenotype.Count; i++)
             {
                 var lg = LinkGenotype[i];
@@ -161,6 +167,14 @@ namespace NEAT.Neural
                 }
             }
             // TODO Implement other mutation types
+        }
+
+        public bool LinkGeneExists(int source, int dest)
+        {
+            foreach (LinkGene lg in LinkGenotype)
+                if (lg.Source == source && lg.Destination == dest)
+                    return true;
+            return false;
         }
 
         public void AddIntermediateNode(LinkGene a)
@@ -266,7 +280,7 @@ namespace NEAT.Neural
                 if (a.LinkGenotype[ac].Innovation > b.LinkGenotype[bc].Innovation)
                 {
                     var ca = a.LinkGenotype[ac];
-                    newGenome.AddConnection(ca.Source, ca.Destination, ca.Weight, ca.Innovation);;
+                    newGenome.AddConnection(ca.Source, ca.Destination, ca.Weight, ca.Innovation); ;
                     bc++;
                 }
                 else if (a.LinkGenotype[ac].Innovation < b.LinkGenotype[bc].Innovation)
@@ -277,7 +291,6 @@ namespace NEAT.Neural
                 }
                 else
                 {
-                    // Add to mean weight differences between matching genes
                     if (a.Fitness > b.Fitness)
                     {
                         var ca = a.LinkGenotype[ac];

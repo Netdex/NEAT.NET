@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NEAT.Debug;
 using NEAT.Neural;
 
 namespace NEAT
@@ -11,25 +12,20 @@ namespace NEAT
     {
         static void Main(string[] args)
         {
-            Genome a = new Genome();
-            AddDummyWithInnovation(a, 1);
-            AddDummyWithInnovation(a, 2);
-            AddDummyWithInnovation(a, 3);
-            AddDummyWithInnovation(a, 5);
-            AddDummyWithInnovation(a, 6);
-            AddDummyWithInnovation(a, 7);
-            AddDummyWithInnovation(a, 10);
-            AddDummyWithInnovation(a, 11);
-            Genome b = new Genome();
-            AddDummyWithInnovation(b, 1);
-            AddDummyWithInnovation(b, 2);
-            AddDummyWithInnovation(b, 3);
-            AddDummyWithInnovation(b, 4);
-            AddDummyWithInnovation(b, 6);
-            AddDummyWithInnovation(b, 7);
-            AddDummyWithInnovation(b, 8);
-            AddDummyWithInnovation(b, 9);
-            Genome.GetCompatibility(a, b);
+            Genome a = new Genome(1,1);
+            for(int i = 0; i < 20; i++)
+                a.Mutate();
+            //Genome b = new Genome(1,1);
+            //for (int i = 0; i < 10; i++)
+            //    b.Mutate();
+            //var o = a.EvaluateNeuralNetwork(new double[] {1});
+            //var c = Genome.Crossover(a, b);
+            //ObjectDumper.Write(o);
+            foreach (LinkGene lg in a.LinkGenotype)
+            {
+                Console.WriteLine($"{lg.Innovation} {lg.Source} -> {lg.Destination}");
+            }
+            new NeuralNetworkVisualization(a).ShowDialog();
         }
 
         public static void AddDummyWithInnovation(Genome g, int innovation)

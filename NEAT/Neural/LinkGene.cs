@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace NEAT.Neural
 {
-    struct LinkGene : IComparable<LinkGene>, IEquatable<LinkGene>
+    public struct LinkGene : IComparable<LinkGene>, IEquatable<LinkGene>
     {
         private static int GlobalInnovation = 0;
 

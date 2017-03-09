@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace NEAT.Neural
 {
-    enum NodeType
+    public enum NodeType
     {
         Input,
         Output,
         Intermediate
     }
 
-    struct NodeGene
+    public struct NodeGene
     {
         public int ID { get; set; }
         public NodeType Type { get; set; }

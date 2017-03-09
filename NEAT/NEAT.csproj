@@ -35,6 +35,8 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -43,6 +45,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Debug\NeuralNetworkVisualization.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Debug\NeuralNetworkVisualization.Designer.cs">
+      <DependentUpon>NeuralNetworkVisualization.cs</DependentUpon>
+    </Compile>
     <Compile Include="Neural\IFitnessEvaluator.cs" />
     <Compile Include="Neural\LinkGene.cs" />
     <Compile Include="Neural\Genome.cs" />
@@ -52,9 +60,15 @@
     <Compile Include="Neural\Species.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utility\ObjectDumper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Debug\NeuralNetworkVisualization.resx">
+      <DependentUpon>NeuralNetworkVisualization.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
